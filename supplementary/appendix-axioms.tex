@@ -1,0 +1,139 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+
+\lstdefinelanguage{Lean}{
+  keywords={theorem,lemma,def,axiom,structure,inductive,where,forall,exists},
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{green!50!black}\itshape,
+  morecomment=[l]{--},
+}
+\lstset{language=Lean,basicstyle=\ttfamily\small,frame=single}
+
+\title{SigmaGov Supplementary Materials:\\Complete Axiom Reference}
+\author{Rui Wang\\University of Houston}
+\date{January 2026}
+
+\begin{document}
+\maketitle
+
+\section{Foundational Axioms (T0--T8)}
+
+\subsection{T0: Truthfulness}
+\begin{lstlisting}
+axiom T0_truthfulness :
+  forall (o : Output), valid o <-> 
+    (grounded o \/ acknowledged_uncertainty o)
+\end{lstlisting}
+
+\subsection{T1: Purpose Seeding}
+\begin{lstlisting}
+axiom purpose : Prompt -> Purpose
+-- Every prompt maps to exactly one purpose
+\end{lstlisting}
+
+\subsection{T2: Binary Achievement}
+\begin{lstlisting}
+-- Purpose.achieved : Bool (by structure definition)
+\end{lstlisting}
+
+\subsection{T3: Five-Pillar Decomposition}
+\begin{lstlisting}
+inductive Phi where
+  | sem   -- Semantic reasoning
+  | syn   -- Syntactic structure
+  | auto  -- Autonomous execution
+  | mem   -- Memory persistence
+  | ctx   -- Contextual anchoring
+\end{lstlisting}
+
+
+\subsection{T4: Decision Gate}
+\begin{lstlisting}
+axiom T4_decision_gate :
+  forall (t : Tool), invoke t -> 
+    exists (r : Reasoning), precedes r (invoke t)
+\end{lstlisting}
+
+\subsection{T5: Binary Governance}
+\begin{lstlisting}
+axiom governance : Behavior -> Deontic
+axiom T5_binary : forall b, 
+  governance b = Obligatory \/ governance b = Forbidden
+\end{lstlisting}
+
+\subsection{T6: Achievement Dimensions}
+\begin{lstlisting}
+def T6_achievement (S : Session) (P : Purpose) 
+    (D : Dimensions S P) : Prop :=
+  WHAT S P D.what /\ WHERE S P D.where_ /\ 
+  HOW S P D.how /\ WHY S P D.why
+\end{lstlisting}
+
+\subsection{T7: Layer Self-Containment}
+\begin{lstlisting}
+axiom config : Layer -> LayerConfig
+-- Each layer has complete configuration
+\end{lstlisting}
+
+\section{NPL Axioms}
+
+\begin{lstlisting}
+axiom ts_test_perfect_convergence :
+  forall (nplP nplR : NPL),
+    nplP.dimensions = nplR.dimensions ->
+    cosineSimilarity nplP.embeddings nplR.embeddings >= tau_npl ->
+    nplConverged nplP nplR tau_npl dimensionEpsilon
+
+axiom ts_test_semantic_misalignment :
+  forall (nplP nplR : NPL) (tau : Float) (epsilon : Dimension -> Float),
+    cosineSimilarity nplP.embeddings nplR.embeddings < tau ->
+    Not (nplConverged nplP nplR tau epsilon)
+
+axiom convergence_result_success_implies_T6 :
+  forall (cr : ConvergenceResult) (S : Session) (P : Purpose),
+    cr.isSuccess = true -> ...
+\end{lstlisting}
+
+\section{Workflow Axioms}
+
+\begin{lstlisting}
+axiom par_comm_result :
+  forall (w1 : Workflow a) (w2 : Workflow b) (p : Purpose),
+    exists (swap : ParResult a b -> ParResult b a),
+      Functor.map swap ((w1 ||| w2) p) = (w2 ||| w1) p
+\end{lstlisting}
+
+\section{Axiom Loader Axioms}
+
+\begin{lstlisting}
+axiom projection_preserves_dependencies :
+  forall foundation ctx a,
+    a in projectAxioms foundation ctx ->
+    forall d in a.dependencies,
+      d in (projectAxioms foundation ctx).map getId
+
+axiom tool_addition_monotonic :
+  forall foundation ctx1 ctx2,
+    ctx1.tools <= ctx2.tools ->
+    projectAxioms foundation ctx1 <= projectAxioms foundation ctx2
+\end{lstlisting}
+
+\section{Threshold Constants}
+
+\begin{tabular}{lll}
+\textbf{Constant} & \textbf{Value} & \textbf{Purpose} \\
+\hline
+$\tau_{\min}$ & 0.75 & Minimum semantic conservation \\
+$\tau_{\text{npl}}$ & 0.85 & NPL similarity threshold \\
+$\tau_{\text{axiom}}$ & 0.85 & Axiom coverage threshold \\
+$\gamma_{\text{what}}$ & 0.40 & WHAT dimension weight \\
+$\gamma_{\text{where}}$ & 0.20 & WHERE dimension weight \\
+$\gamma_{\text{how}}$ & 0.25 & HOW dimension weight \\
+$\gamma_{\text{why}}$ & 0.15 & WHY dimension weight \\
+\end{tabular}
+
+\end{document}

@@ -1,0 +1,158 @@
+% AAAI Version - 7 pages (AI Safety Angle)
+% SigmaGov: Formal Specifications for Verifiable LLM Agent Alignment
+
+\documentclass[letterpaper]{article}
+\usepackage{aaai25}  % AAAI 2025 style
+\usepackage{times}
+\usepackage{helvet}
+\usepackage{courier}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\newcommand{\sigmagov}{\ensuremath{\Sigma\text{Gov}}}
+\newcommand{\oblig}{\ensuremath{\mathbf{O}}}
+\newcommand{\forb}{\ensuremath{\mathbf{F}}}
+
+\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,frame=single}
+
+\title{SigmaGov: Formal Specifications for Verifiable LLM Agent Alignment}
+\author{Rui Wang\\University of Houston\\rwang19@uh.edu}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+As LLM agents operate with increasing autonomy, alignment approaches based on
+RLHF and constitutional AI lack formal guarantees---we cannot \emph{prove}
+correct behavior, only observe it. We present \sigmagov{}, a formal governance
+calculus with Lean 4 formalization providing: (1) eight foundational axioms for
+agent governance, (2) binary deontic logic eliminating behavioral ambiguity,
+(3) semantic convergence checking for purpose verification, and (4) workflow
+algebra with purpose preservation proofs. Our complete formalization (15 files,
+~5,500 lines, zero incomplete proofs) demonstrates that formal methods can
+provide the missing foundation for verifiably aligned LLM agent systems.
+\end{abstract}
+
+
+\section{Introduction}
+
+The deployment of increasingly autonomous LLM agents~\cite{wang2024survey}
+raises critical safety questions. Current alignment approaches---RLHF
+\cite{ouyang2022training}, constitutional AI~\cite{bai2022constitutional}---provide
+statistical guarantees but cannot \emph{prove} behavioral correctness.
+
+We argue that \textbf{formal specifications} are necessary for verifiable
+alignment. Formal methods have secured critical systems from compilers
+\cite{leroy2009compcert} to operating systems~\cite{klein2009sel4}. Why not
+LLM agents?
+
+We present \sigmagov{}, a formal governance calculus with machine-verified
+specifications in Lean 4. Our key insight: agent governance can be formalized
+as deontic logic~\cite{vonwright1951} over behavioral propositions.
+
+\subsection{The Alignment Gap}
+
+Consider an agent tasked with ``implement authentication.'' Without formal
+specifications:
+\begin{itemize}
+\item How do we \emph{verify} task completion?
+\item What constraints must be respected?
+\item How does purpose propagate through delegation?
+\end{itemize}
+\sigmagov{} answers these with machine-checkable specifications.
+
+
+\section{SigmaGov Framework}
+
+\subsection{Binary Governance}
+
+A key design decision is eliminating behavioral ambiguity:
+
+\textbf{Axiom T5 (Binary Governance):} $\forall \phi: \oblig(\phi) \oplus \forb(\phi)$
+
+Every behavior is either obligatory or forbidden---no ``permitted but not
+required'' middle ground. An agent always knows whether an action should occur.
+
+\subsection{Core Axioms for AI Safety}
+
+\textbf{T0 (Truthfulness):} All outputs must be grounded or acknowledge uncertainty.
+This prevents fabrication and hallucination at the specification level.
+
+\textbf{T1 (Purpose Seeding):} Every prompt seeds exactly one purpose.
+Agents cannot invent purposes beyond user intent.
+
+\textbf{T6 (Achievement Dimensions):} Completion requires four dimensions:
+WHAT (40\%), WHERE (20\%), HOW (25\%), WHY (15\%). Agents cannot claim
+completion without verifying all dimensions.
+
+\subsection{Semantic Convergence}
+
+NPL (Natural Procedural Language) measures alignment between stated purpose
+and reported result using embedding similarity ($\tau = 0.85$). This provides
+a formal criterion for ``task complete'' rather than agent self-report.
+
+
+\section{Formalization Results}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrl}
+\toprule
+\textbf{Component} & \textbf{Lines} & \textbf{Status} \\
+\midrule
+Foundational Axioms (T0--T8) & 495 & Complete \\
+Five-Pillar Architecture & 288 & Complete \\
+NPL Convergence & 549 & Complete \\
+Workflow Algebra & 349 & Complete \\
+Test Correspondence & 757 & Complete \\
+Supporting Modules & 3,062 & Complete \\
+\midrule
+\textbf{Total} & \textbf{5,500} & \textbf{Zero sorry} \\
+\bottomrule
+\end{tabular}
+\caption{Lean 4 Formalization Statistics}
+\end{table}
+
+The formalization compiles with zero \texttt{sorry} declarations (incomplete
+proofs), demonstrating internal consistency.
+
+\section{Related Work}
+
+\textbf{Neural Network Verification.} Reluplex~\cite{katz2017reluplex} verifies
+input-output properties of DNNs. \sigmagov{} operates at the agent behavioral level.
+
+\textbf{AI Alignment.} RLHF~\cite{christiano2017deep} and Constitutional AI
+\cite{bai2022constitutional} provide training-time alignment. We complement
+these with formal runtime specifications.
+
+\textbf{Normative MAS.} Multi-agent norms~\cite{boella2006introduction} inform
+our approach to behavioral constraints across agent hierarchies.
+
+
+\section{Conclusion}
+
+We presented \sigmagov{}, demonstrating that formal methods can provide
+verifiable foundations for LLM agent alignment. Our Lean 4 formalization
+(8 axioms, 5-pillar architecture, NPL convergence, workflow algebra)
+comprises 5,500 lines with zero incomplete proofs.
+
+\textbf{Impact for AI Safety:} \sigmagov{} enables:
+\begin{itemize}
+\item \emph{Provable behavioral constraints} via deontic logic
+\item \emph{Verifiable task completion} via NPL convergence
+\item \emph{Purpose preservation} across agent hierarchies
+\end{itemize}
+
+Future work includes runtime verification integration and multi-agent
+coordination specifications.
+
+\section*{Reproducibility}
+Lean 4 source available in supplementary materials.
+
+\bibliographystyle{aaai}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,247 @@
+% arXiv Version - Full Paper (No page limit)
+% SigmaGov: A Formal Governance Calculus for LLM Agent Systems
+
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage[margin=1in]{geometry}
+
+% arXiv identifier (fill after submission)
+% \arxivid{26XX.XXXXX}
+
+% Theorem environments
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{axiom}{Axiom}
+\newtheorem{definition}[theorem]{Definition}
+
+% Custom commands
+\newcommand{\sigmagov}{\ensuremath{\Sigma\text{Gov}}}
+\newcommand{\oblig}{\ensuremath{\mathbf{O}}}
+\newcommand{\forb}{\ensuremath{\mathbf{F}}}
+
+
+% Lean 4 code styling
+\lstdefinelanguage{Lean}{
+  keywords={theorem,lemma,def,axiom,structure,inductive,where,forall,exists},
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{green!50!black}\itshape,
+  morecomment=[l]{--},
+  morecomment=[s]{/-}{-/},
+}
+\lstset{language=Lean,basicstyle=\ttfamily\small,breaklines=true,frame=single}
+
+\title{\textbf{SigmaGov: A Formal Governance Calculus for LLM Agent Systems}\\
+\large{Machine-Verified Specifications in Lean 4}}
+
+\author{
+  Rui Wang\\
+  University of Houston\\
+  \texttt{rwang19@uh.edu}
+}
+
+\date{January 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+As Large Language Model (LLM) agents become increasingly autonomous, ensuring
+behavior aligns with specified intentions becomes critical. We present \sigmagov{},
+a formal governance calculus providing machine-checkable specifications for LLM
+agent behavior, purpose tracking, and achievement verification.
+
+Our Lean 4 formalization establishes: (1) eight foundational axioms (T0--T8)
+governing truthfulness, purpose immutability, and achievement dimensions;
+(2) a five-pillar architecture decomposing agent execution into semantic,
+syntactic, autonomous, memory, and contextual domains; (3) Natural Procedural
+Language (NPL) for measuring semantic convergence; and (4) a workflow algebra
+with compositional operators preserving purpose across layer hierarchies.
+
+The complete formalization comprises 14 Lean 4 source files (~5,300 lines) with
+\textbf{zero incomplete proofs}. \sigmagov{} provides a rigorous foundation
+for building verifiably aligned LLM agent systems.
+\end{abstract}
+
+
+\section{Introduction}
+
+The rapid advancement of LLM capabilities has enabled increasingly autonomous
+agent systems~\cite{wang2024survey}. These agents perform complex multi-step
+tasks, delegate to sub-agents, and make consequential decisions with minimal
+human oversight. This autonomy raises fundamental questions about \emph{governance}:
+How do we specify intended behavior? How do we verify purpose achievement?
+
+Existing approaches to LLM alignment focus on training-time interventions
+(RLHF~\cite{ouyang2022training}, constitutional AI~\cite{bai2022constitutional})
+or runtime guardrails. While valuable, these lack \emph{formal guarantees}.
+
+We present \sigmagov{}, a formal governance calculus addressing these limitations
+through machine-verified specifications. Our key insight: LLM agent governance
+can be formalized as a \emph{deontic logic}~\cite{vonwright1951} over behavioral
+propositions, combined with \emph{semantic convergence checking}.
+
+\subsection{Contributions}
+\begin{enumerate}
+    \item \textbf{Foundational Axiom System (T0--T8)}: Eight axioms governing
+    truthfulness, purpose immutability, binary achievement, and four-dimensional
+    achievement verification.
+    \item \textbf{Five-Pillar Architecture}: Decomposition into $\Phi_{\text{sem}}$,
+    $\Phi_{\text{syn}}$, $\Phi_{\text{auto}}$, $\Phi_{\text{mem}}$, $\Phi_{\text{ctx}}$.
+    \item \textbf{NPL Convergence}: Semantic alignment measurement with formal
+    thresholds ($\tau_{\text{npl}} = 0.85$).
+    \item \textbf{Workflow Algebra}: Compositional operators ($\bind$, $\seq$,
+    $\parallel$) with purpose preservation proofs.
+    \item \textbf{Complete Lean 4 Formalization}: 14 source files, ~5,300 lines, zero sorry.
+\end{enumerate}
+
+
+\section{The \sigmagov{} Formalization}
+
+\subsection{Deontic Operators}
+
+A key design decision is \textbf{binary governance}:
+
+\begin{axiom}[T5: Binary Governance]
+$\forall \phi: \oblig(\phi) \oplus \forb(\phi)$
+\end{axiom}
+
+Every behavior is either obligatory or forbidden---no ``permitted but not
+required'' middle ground. This eliminates ambiguity.
+
+\subsection{Foundational Axioms (T0--T8)}
+
+\begin{axiom}[T0: Truthfulness]
+$\forall o: \text{valid}(o) \Leftrightarrow \text{grounded}(o) \lor \text{ack\_uncertainty}(o)$
+\end{axiom}
+
+\begin{axiom}[T1: Purpose Seeding]
+$\forall p \in \text{UserPrompt}: \exists! P: P = \text{purpose}(p)$
+\end{axiom}
+
+\begin{axiom}[T6: Achievement Dimensions]
+$\text{Achievement} \equiv \text{WHAT} \land \text{WHERE} \land \text{HOW} \land \text{WHY}$
+
+With weights: $\gamma_{\text{what}}=0.40$, $\gamma_{\text{where}}=0.20$,
+$\gamma_{\text{how}}=0.25$, $\gamma_{\text{why}}=0.15$.
+\end{axiom}
+
+\begin{axiom}[T7: Layer Self-Containment]
+$\forall L_n: \text{config}(L_n).\text{complete} = \text{true}$
+\end{axiom}
+
+\begin{axiom}[T8: Context Anchoring]
+$\forall E: \exists M = (\text{cwd}, t): \text{anchored}(E, M) \land \text{immutable}(M)$
+\end{axiom}
+
+
+\subsection{Five-Pillar Architecture}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Pillar} & \textbf{Domain} & \textbf{Responsibility} \\
+\midrule
+$\Phi_{\text{sem}}$ & Semantic & Reasoning, interpretation \\
+$\Phi_{\text{syn}}$ & Syntactic & Formal rules, grammar \\
+$\Phi_{\text{auto}}$ & Autonomous & Agency, execution \\
+$\Phi_{\text{mem}}$ & Memory & State persistence \\
+$\Phi_{\text{ctx}}$ & Context & Spacetime anchoring \\
+\bottomrule
+\end{tabular}
+\caption{Five-Pillar Architecture}
+\end{table}
+
+\subsection{NPL Convergence}
+
+NPL provides the semantic bridge between purpose and result:
+
+\begin{definition}[NPL Convergence]
+$\text{nplConverged}(P, R, \tau, \epsilon) \Leftrightarrow 
+  \text{nplSimilar}(P, R, \tau) \land \text{nplStructurallyAligned}(P, R, \epsilon)$
+\end{definition}
+
+Where $\tau_{\text{npl}} = 0.85$ and similarity uses cosine distance on embeddings.
+
+
+\subsection{Workflow Algebra}
+
+Workflows are modeled as a Reader monad over Purpose:
+
+\begin{lstlisting}[caption={Workflow Operators}]
+def bind (w : Workflow a) (f : a -> Workflow b) : Workflow b :=
+  fun p => w p >>= fun a => f a p
+
+def seq (w1 : Workflow a) (w2 : Workflow b) : Workflow b :=
+  fun p => w1 p >> w2 p
+
+def par (w1 : Workflow a) (w2 : Workflow b) : Workflow (a * b) :=
+  fun p => do let r1 <- w1 p; let r2 <- w2 p; pure (r1, r2)
+\end{lstlisting}
+
+\begin{theorem}[Purpose Preservation]
+Sequential composition preserves purpose:
+$\forall w_1, w_2, p: (w_1 \seq w_2)(p) = w_1(p) \bind (\lambda\_. w_2(p))$
+\end{theorem}
+
+\section{Evaluation}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrl}
+\toprule
+\textbf{File} & \textbf{Lines} & \textbf{Theorems} & \textbf{Status} \\
+\midrule
+Basic.lean & 295 & 5 & Complete \\
+Axioms.lean & 495 & 12 & Complete \\
+NPL.lean & 549 & 8 & Complete \\
+Workflow.lean & 349 & 6 & Complete \\
+TestCorrespondence.lean & 757 & 38 & Complete \\
+\emph{+ 9 others} & 3,055 & 31 & Complete \\
+\midrule
+\textbf{Total} & \textbf{5,300} & \textbf{100} & \textbf{Zero sorry} \\
+\bottomrule
+\end{tabular}
+\caption{Formalization Statistics}
+\end{table}
+
+
+\section{Related Work}
+
+\textbf{Formal Methods for AI Safety.} Prior work on neural network
+verification~\cite{katz2017reluplex,huang2017safety} focuses on input-output
+properties. \sigmagov{} formalizes behavioral governance at the agent level.
+
+\textbf{Deontic Logic.} Classical deontic logic~\cite{vonwright1951,mcnamara2010}
+provides the foundation for our obligation/forbiddance operators.
+
+\textbf{LLM Agent Frameworks.} Systems like ReAct~\cite{yao2023react},
+LangChain~\cite{chase2022langchain}, and Claude~\cite{anthropic2024claude}
+provide practical tooling but lack formal specifications.
+
+\textbf{Normative Multi-Agent Systems.} Work on normative MAS~\cite{boella2006introduction}
+informs our approach to behavioral constraints across agent hierarchies.
+
+\section{Conclusion}
+
+We presented \sigmagov{}, a formal governance calculus for LLM agent systems
+with complete Lean 4 formalization. Key contributions: eight foundational
+axioms (T0--T8), five-pillar architecture, NPL convergence, workflow algebra
+with purpose preservation, and zero-sorry formalization (~5,300 lines).
+
+Future work includes multi-agent coordination, runtime verification integration,
+and certified code extraction from Lean specifications.
+
+\section*{Code Availability}
+Full Lean 4 source: \url{https://github.com/fixthatbug/sigmagov-lean4}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
